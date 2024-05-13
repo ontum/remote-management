@@ -5,6 +5,7 @@ const crypto = require('node:crypto');
 const { createServer } = require('node:http');
 const { stat, readFile } = require('node:fs/promises');
 const { join } = require('node:path');
+const Util = require('./Util');
 
 const expressSession = require('express-session');
 const debug = require('debug')('Server');
@@ -209,9 +210,6 @@ module.exports = class Server {
         console.log(info);
         return 'ok';
       }))
-      .listen(PORT, () => {
-        debug(`Listening on http://0.0.0.0:${PORT}`);
-      })
       .put('/api/wireguard/client/:clientId/address', defineEventHandler(async (event) => {
         const clientId = getRouterParam(event, 'clientId');
         if (clientId === '__proto__' || clientId === 'constructor' || clientId === 'prototype') {

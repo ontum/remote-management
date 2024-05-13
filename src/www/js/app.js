@@ -299,7 +299,6 @@ new Vue({
         .catch((err) => alert(err.message || err.toString()))
         .finally(() => this.refresh().catch(console.error));
     },
-<<<<<<< HEAD
     toggleTheme() {
       const themes = ['light', 'dark', 'auto'];
       const currentIndex = themes.indexOf(this.uiTheme);
@@ -320,13 +319,12 @@ new Vue({
     },
     toggleCharts() {
       localStorage.setItem('uiShowCharts', this.uiShowCharts ? 1 : 0);
-=======
+    },
     adbConnect(address) {
       this.api.adbConnect({ ip: address })
         .catch(err => alert(err.message || err.toString()))
         .finally(() => this.refresh().catch(console.error));
->>>>>>> 3858c60 ([Feature] add adb within the docker image creation)
-    },
+    }
   },
   filters: {
     bytes,
@@ -384,13 +382,8 @@ new Vue({
 
       const currentRelease = await this.api.getRelease();
       const latestRelease = await fetch('https://wg-easy.github.io/wg-easy/changelog.json')
-<<<<<<< HEAD
-        .then((res) => res.json())
-        .then((releases) => {
-=======
         .then(res => res.json())
         .then(releases => {
->>>>>>> 3858c60 ([Feature] add adb within the docker image creation)
           const releasesArray = Object.entries(releases).map(([version, changelog]) => ({
             version: parseInt(version, 10),
             changelog,
