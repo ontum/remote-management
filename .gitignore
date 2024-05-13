@@ -5,4 +5,4 @@
 .DS_Store
 *.swp
 .env*
-/rethinkdb-data
+/rethinkdb-data*
