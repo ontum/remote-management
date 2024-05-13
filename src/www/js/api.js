@@ -138,4 +138,13 @@ class API {
     });
   }
 
+  async adbConnect({ ip }) {
+    console.log(ip);
+    return this.call({
+      method: 'post',
+      path: '/adb/connect',
+      body: { ip },
+    });
+  }
+
 }

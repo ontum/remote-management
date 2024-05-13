@@ -23,6 +23,7 @@ const {
 } = require('h3');
 
 const WireGuard = require('../services/WireGuard');
+const Adb = require('../services/Adb');
 
 const {
   PORT,
@@ -202,6 +203,15 @@ module.exports = class Server {
         await WireGuard.updateClientName({ clientId, name });
         return { success: true };
       }))
+      .post('/api/adb/connect', Util.promisify(async req => {
+        const { ip } = req.body;
+        const info = await Adb.connect(ip);
+        console.log(info);
+        return 'ok';
+      }))
+      .listen(PORT, () => {
+        debug(`Listening on http://0.0.0.0:${PORT}`);
+      })
       .put('/api/wireguard/client/:clientId/address', defineEventHandler(async (event) => {
         const clientId = getRouterParam(event, 'clientId');
         if (clientId === '__proto__' || clientId === 'constructor' || clientId === 'prototype') {
@@ -242,6 +252,7 @@ module.exports = class Server {
 
     createServer(toNodeListener(app)).listen(PORT, WEBUI_HOST);
     debug(`Listening on http://${WEBUI_HOST}:${PORT}`);
+
   }
 
 };

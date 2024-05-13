@@ -1,7 +1,12 @@
 /config
 /wg0.conf
 /wg0.json
+<<<<<<< HEAD
 /src/node_modules
 .DS_Store
 *.swp
 .env*
+=======
+.env*
+/rethinkdb-data
+>>>>>>> 3858c60 ([Feature] add adb within the docker image creation)
