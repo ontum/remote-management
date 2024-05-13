@@ -1,0 +1,102 @@
+version: "3.8"
+services:
+  wgeasy:
+    image: wgeasy-img
+    # build:
+    #   context: $PWD
+    #   dockerfile: $PWD/Dockerfile
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.wgeasy-http.service: wgeasy
+      traefik.http.routers.wgeasy-http.entrypoints: http
+      traefik.http.routers.wgeasy-http.middlewares: https-redirect
+      traefik.http.routers.wgeasy-http.rule: Host(`vpn.stage.ontum.co`)
+
+      traefik.http.routers.wgeasy-https.service: wgeasy
+      traefik.http.routers.wgeasy-https.entrypoints: https
+      traefik.http.routers.wgeasy-https.rule: Host(`vpn.stage.ontum.co`)
+      traefik.http.routers.wgeasy-https.tls: "true"
+      traefik.http.routers.wgeasy-https.tls.certresolver: le
+      traefik.http.services.wgeasy.loadbalancer.server.port: '51821'
+      # traefik.udp.routers.wgeasy-udp.entrypoints: 'udp'
+      # traefik.udp.routers.wgeasy-udp.service: wgeasy-udp
+      # traefik.udp.services.wgeasy-udp.loadbalancer.server.port: '51820'
+
+      traefik.http.routers.stf-https.service: stf
+      traefik.http.routers.stf-https.entrypoints: https
+      traefik.http.routers.stf-https.rule: Host(`mdm.stage.ontum.co`)
+      traefik.http.routers.stf-https.tls: "true"
+      traefik.http.routers.stf-https.tls.certresolver: le
+      traefik.http.services.stf.loadbalancer.server.port: '7100'
+    networks:
+      - fr_default
+    environment:
+      # ⚠️ Required:
+      # Change this to your host's public address
+      - WG_HOST=vpn.stage.ontum.co
+
+      # Optional:
+      - PASSWORD=${ADMIN_PASSWORD}
+      - WG_PORT=51820
+      - WG_DEFAULT_ADDRESS=10.8.0.x
+      - WG_DEFAULT_DNS=1.1.1.1
+      # - WG_MTU=1420
+      - WG_ALLOWED_IPS=10.8.0.0/16
+      - WG_PERSISTENT_KEEPALIVE=25
+      # - WG_PRE_UP=echo "Pre Up" > /etc/wireguard/pre-up.txt
+      - WG_POST_UP=iptables -t nat -A POSTROUTING -s 10.8.0.0/16 -o eth0 -j MASQUERADE && iptables -A INPUT -p udp -m udp --dport 51820 -j ACCEPT && iptables -A FORWARD -i wg0 -j ACCEPT && iptables -A FORWARD -o wg0 -j ACCEPT
+      # - WG_PRE_DOWN=echo "Pre Down" > /etc/wireguard/pre-down.txt
+      # - WG_POST_DOWN=echo "Post Down" > /etc/wireguard/post-down.txt
+
+      # image: weejewel/wg-easy
+    container_name: wgeasy
+    volumes:
+      - ./config:/etc/wireguard
+      - /home/frappe/docker/development/backend_management/storage:/storage_drive
+    ports:
+      - "7100:7100"
+      - "7110:7110"
+      - "7400-7500:7400-7500"
+      # ports:
+      - "51820:51820/udp"
+      # - "51821:51821/tcp"
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    sysctls:
+      - net.ipv4.ip_forward=1
+      - net.ipv4.conf.all.src_valid_mark=1
+  rethinkdb:
+    container_name: rethinkdb
+    image: rethinkdb:2.4.2
+    restart: unless-stopped
+    network_mode: service:wgeasy
+    volumes:
+      - "./rethinkdb-data:/data"
+    command: "rethinkdb --bind all --cache-size 2048"
+
+  stf:
+    container_name: stf
+    image: stfwg
+    volumes:
+      - "./wireguard:/wg"
+    # ports:
+    #   - "7100:7100"
+    #   - "7110:7110"
+    #   - "7400-7500:7400-7500"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ='Asia/Kolkata'
+      - RETHINKDB_PORT_28015_TCP=tcp://localhost:28015
+      - STF_ADMIN_EMAIL=admin@ontum.co
+      - STF_ADMIN_NAME=OkAdmin
+      - STF_LOCAL_ALLOW_REMOTE=true
+    restart: unless-stopped
+    network_mode: "service:wgeasy"
+    command: "/bin/sh -c 'stf local --public-ip mdm.stage.ontum.co --provider-min-port 7400 --provider-max-port 7500 -R '"
+
+networks:
+  fr_default:
+    external: true
