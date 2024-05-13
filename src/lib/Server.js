@@ -204,11 +204,19 @@ module.exports = class Server {
         await WireGuard.updateClientName({ clientId, name });
         return { success: true };
       }))
-      .post('/api/adb/connect', Util.promisify(async req => {
-        const { ip } = req.body;
+      .post('/api/adb/connect',  defineEventHandler(async (event) => {
+        const { ip } = await readBody(event);
+
+        if (typeof ip !== 'string') {
+          throw createError({
+            status: 401,
+            message: 'Missing: IP',
+          });
+        }
+
         const info = await Adb.connect(ip);
         console.log(info);
-        return 'ok';
+        return { success: true };
       }))
       .put('/api/wireguard/client/:clientId/address', defineEventHandler(async (event) => {
         const clientId = getRouterParam(event, 'clientId');

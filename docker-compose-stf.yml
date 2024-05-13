@@ -1,10 +1,10 @@
 version: "3.8"
 services:
   wgeasy:
-    image: wgeasy-img
-    # build:
-    #   context: $PWD
-    #   dockerfile: $PWD/Dockerfile
+    # image: wgeasy-img
+    build:
+      context: $PWD
+      dockerfile: $PWD/stfwg.Dockerfile
     labels:
       traefik.enable: "true"
       traefik.http.routers.wgeasy-http.service: wgeasy
@@ -67,6 +67,7 @@ services:
     sysctls:
       - net.ipv4.ip_forward=1
       - net.ipv4.conf.all.src_valid_mark=1
+
   rethinkdb:
     container_name: rethinkdb
     image: rethinkdb:2.4.2
@@ -76,9 +77,11 @@ services:
       - "./rethinkdb-data:/data"
     command: "rethinkdb --bind all --cache-size 2048"
 
-  stf:
-    container_name: stf
-    image: stfwg
+  stfwg:
+    container_name: stfwg
+    build:
+      context: ${STF_DIR}
+      dockerfile: ${STF_DIR}/stfwg.Dockerfile
     volumes:
       - "./wireguard:/wg"
     # ports:
@@ -95,6 +98,9 @@ services:
       - STF_LOCAL_ALLOW_REMOTE=true
     restart: unless-stopped
     network_mode: "service:wgeasy"
+    depends_on:
+      - wgeasy
+      - rethinkdb
     command: "/bin/sh -c 'stf local --public-ip mdm.stage.ontum.co --provider-min-port 7400 --provider-max-port 7500 -R '"
 
 networks:
