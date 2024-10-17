@@ -12,23 +12,20 @@ services:
       traefik.http.routers.wgeasy-http.service: wgeasy
       traefik.http.routers.wgeasy-http.entrypoints: http
       traefik.http.routers.wgeasy-http.middlewares: https-redirect
-      traefik.http.routers.wgeasy-http.rule: Host(`vpn.stage.ontum.co`)
+      traefik.http.routers.wgeasy-http.rule: Host(`${DOMAIN}`)
 
       traefik.http.routers.wgeasy-https.service: wgeasy
       traefik.http.routers.wgeasy-https.entrypoints: https
-      traefik.http.routers.wgeasy-https.rule: Host(`vpn.stage.ontum.co`)
+      traefik.http.routers.wgeasy-https.rule: Host(`${DOMAIN}`)
       traefik.http.routers.wgeasy-https.tls: "true"
       traefik.http.routers.wgeasy-https.tls.certresolver: le
       traefik.http.services.wgeasy.loadbalancer.server.port: '51821'
-      # traefik.udp.routers.wgeasy-udp.entrypoints: 'udp'
-      # traefik.udp.routers.wgeasy-udp.service: wgeasy-udp
-      # traefik.udp.services.wgeasy-udp.loadbalancer.server.port: '51820'
     networks:
       - fr_default
     environment:
       # Change Language:
       # (Supports: en, ua, ru, tr, no, pl, fr, de, ca, es, ko, vi, nl, is, pt, chs, cht, it, th, hi)
-      - LANG=de
+      - LANG=en
       # ⚠️ Required:
       # Change this to your host's public address
       - WG_HOST=vpn.stage.ontum.co
@@ -46,17 +43,17 @@ services:
       - WG_POST_UP=iptables -t nat -A POSTROUTING -s 10.8.0.0/16 -o eth0 -j MASQUERADE && iptables -A INPUT -p udp -m udp --dport 51820 -j ACCEPT && iptables -A FORWARD -i wg0 -j ACCEPT && iptables -A FORWARD -o wg0 -j ACCEPT
       # - WG_PRE_DOWN=echo "Pre Down" > /etc/wireguard/pre-down.txt
       # - WG_POST_DOWN=echo "Post Down" > /etc/wireguard/post-down.txt
-      # - UI_TRAFFIC_STATS=true
-      # - UI_CHART_TYPE=0 # (0 Charts disabled, 1 # Line chart, 2 # Area chart, 3 # Bar chart)
+      - UI_TRAFFIC_STATS=true
+      - UI_CHART_TYPE=1 # (0 Charts disabled, 1 # Line chart, 2 # Area chart, 3 # Bar chart)
 
     image: ghcr.io/wg-easy/wg-easy
+    restart: unless-stopped
     container_name: wg-easy
     volumes:
       - etc_wireguard:/etc/wireguard
     ports:
       - "51820:51820/udp"
       # - "51821:51821/tcp"
-    restart: unless-stopped
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
